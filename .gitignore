@@ -3,3 +3,4 @@ tests/
 *.rle
 *.o
 *.a
+.DS_Store
