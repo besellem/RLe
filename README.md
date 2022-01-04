@@ -22,9 +22,9 @@ Decode
 ```
 
 ### To Do
-- [ ] Makefile
+- [x] Makefile
 - [ ] Organize source code
-- [ ] Add options
+- [ ] Add options in main
 - [x] Implement default Run Length encoder
 - [x] Implement default Run Length decoder
 - [ ] Implement Run Length escape encoder
