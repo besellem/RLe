@@ -1,33 +1,25 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   RLe.c                                              :+:      :+:    :+:   */
+/*   RLE_BurrowsWheelerTransform.h                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: besellem <besellem@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2022/01/02 19:15:30 by besellem          #+#    #+#             */
-/*   Updated: 2022/01/04 15:17:15 by besellem         ###   ########.fr       */
+/*   Created: 2022/01/04 15:16:27 by besellem          #+#    #+#             */
+/*   Updated: 2022/01/04 15:23:09 by besellem         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+#ifndef RLE_BURROWS_WHEELER_TRANSFORM_H
+# define RLE_BURROWS_WHEELER_TRANSFORM_H
+
 #include "RLe.h"
 
-
-/* Globals importation */
-// extern uint8_t		*g_output;
-// extern size_t		g_output_size;
-// extern int			fd_in;
-// extern int			fd_out;
-
-void	RLE_EncodeGeneric(int in)
+typedef struct rotation_s
 {
-	// RLE_RunLengthEncode(in);
-	RLE_RunLengthEscapeEncode(in);
-}
+	size_t		size;
+	size_t		index;
+	uint8_t		*suffix;
+}	rotation_t;
 
-void	RLE_DecodeGeneric(int in)
-{
-	// RLE_RunLengthDecode(in);
-	RLE_RunLengthEscapeDecode(in);
-	// RLE_RunLengthEscapeDecode(in, 0, 0);
-}
+#endif

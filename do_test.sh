@@ -37,7 +37,7 @@ echo "> Generating ${GREEN}${NBYTE}${CLR_COLOR} random bytes..."
 head -c$NBYTE /dev/random > $INPUT_FILE
 
 echo "> Compiling ${GREEN}${PROG}${CLR_COLOR}..."
-gcc -Wall -Wextra -Werror srcs/RLe.c -o $PROG
+make > /dev/null
 
 echo "> Encoding..."
 ./$PROG $INPUT_FILE $ENCODED_FILE
@@ -56,5 +56,6 @@ else
 	echo "${RED}KO${CLR_COLOR}"
 fi
 
-rm $PROG $FILENAME*
+make fclean > /dev/null
+rm $FILENAME*
 exit $last
