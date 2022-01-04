@@ -11,9 +11,13 @@ make
 ```
 
 ## Usage
-Make sure to compile and then :
+Encode
 ```sh
 ./RLe <input_file> <output_file>
+```
+
+Decode
+```sh
 ./RLe -d <input_file>
 ```
 
