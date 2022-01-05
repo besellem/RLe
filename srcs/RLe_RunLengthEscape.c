@@ -6,7 +6,7 @@
 /*   By: besellem <besellem@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/01/04 15:14:42 by besellem          #+#    #+#             */
-/*   Updated: 2022/01/04 15:21:21 by besellem         ###   ########.fr       */
+/*   Updated: 2022/01/05 01:28:44 by besellem         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,114 +20,170 @@ extern int			fd_in;
 extern int			fd_out;
 
 
+typedef uint64_t	 count_type;
+#define COUNT_MAX	 UINT64_MAX
+#define REPEAT_BUFF  4096
+
+
 void	RLE_RunLengthEscapeEncode(int in)
 {
-	uint8_t		buf[BUFF_SIZE];
-	uint8_t		*ptr;
-	uint8_t		count;
+	uint8_t		buf;
+	uint8_t		buf_prev = 0;
+	count_type	count = 1;
 	ssize_t		n;
 
-	while ((n = read(in, buf, BUFF_SIZE)) > 0)
+	assert( read(in, &buf_prev, sizeof(uint8_t)) != SYSCALL_ERR );
+	while ((n = read(in, &buf, sizeof(uint8_t))) > 0)
 	{
-		// RLE_BurrowsWheelerTransformEncode(buf, n);
-		ptr = buf;
-		count = 1;
-		for ( ; n > 0; --n)
+		if (buf == buf_prev)
 		{
-			if (count < UCHAR_MAX && (n - 1) > 0 && *ptr == *(ptr + 1))
+			++count;
+			assert( count < COUNT_MAX );
+		}
+		else
+		{
+			if (count == 1)
 			{
-				++count;
+				RLE_WriteToBuffer(&buf_prev, sizeof(buf));
 			}
 			else
 			{
-				if (1 == count)
-				{
-					RLE_WriteToBuffer(ptr, sizeof(*ptr));
-				}
-				else
-				{
-					// not working with the buffer is filled with a single char
-					// if ((n - 1) <= 0)
-					// {
-					// 	printf("Here\n");
-					// 	lseek(in, -count, SEEK_CUR);
-					// 	break ;
-					// }
-					RLE_WriteToBuffer(ptr, sizeof(*ptr));     // value added 2 times
-					RLE_WriteToBuffer(ptr, sizeof(*ptr));
-					RLE_WriteToBuffer(&count, sizeof(count)); // number of repetitions
-				}
+				RLE_WriteToBuffer(&buf_prev, sizeof(buf)); // value added 2 times
+				RLE_WriteToBuffer(&buf_prev, sizeof(buf));
+				RLE_WriteToBuffer(&count, sizeof(count));  // number of repetitions
 				count = 1;
 			}
-			++ptr;
 		}
+		buf_prev = buf;
 	}
+	if (n < 0)
+		perror("read");
 }
+
+
+// void	RLE_RunLengthEscapeEncode(int in)
+// {
+// 	uint8_t		buf[BUFF_SIZE];
+// 	uint8_t		*ptr;
+// 	uint8_t		count;
+// 	ssize_t		n;
+
+// 	while ((n = read(in, buf, BUFF_SIZE)) > 0)
+// 	{
+// 		// RLE_BurrowsWheelerTransformEncode(buf, n);
+// 		ptr = buf;
+// 		count = 1;
+// 		for ( ; n > 0; --n)
+// 		{
+// 			if (count < UCHAR_MAX && (n - 1) > 0 && *ptr == *(ptr + 1))
+// 			{
+// 				++count;
+// 			}
+// 			else
+// 			{
+// 				if (1 == count)
+// 				{
+// 					RLE_WriteToBuffer(ptr, sizeof(*ptr));
+// 				}
+// 				else
+// 				{
+// 					// not working if the buffer is filled with a single char
+// 					if ((n - 1) <= 0)
+// 					{
+// 						// printf("Here\n");
+// 						assert ( lseek(in, -count, SEEK_CUR) != SYSCALL_ERR );
+// 						break ;
+// 					}
+// 					RLE_WriteToBuffer(ptr, sizeof(*ptr));     // value added 2 times
+// 					RLE_WriteToBuffer(ptr, sizeof(*ptr));
+// 					RLE_WriteToBuffer(&count, sizeof(count)); // number of repetitions
+// 				}
+// 				count = 1;
+// 			}
+// 			++ptr;
+// 		}
+// 	}
+// 	if (n < 0)
+// 		error("read");
+// }
 
 void	RLE_RunLengthEscapeDecode(int in)
 {
 	size_t		bufsize = BUFF_SIZE;
-	uint8_t		*buf = malloc(bufsize + 1);
-	uint8_t		c_repeat[UCHAR_MAX];
+	uint8_t		*buf = malloc(bufsize);
+	uint8_t		*c_repeat = malloc(REPEAT_BUFF);
 	uint8_t		*ptr;
 	ssize_t		n;
 	ssize_t		n_cpy;
+	count_type	count;
 
-	if (!buf)
+
+	if (!buf || !c_repeat)
+	{
+		free(buf);
+		free(c_repeat);
 		error("malloc");
+	}
 
 	while ((n = read(in, buf, bufsize)) > 0)
 	{
 		if (n == 1)
 		{
 			RLE_WriteToBuffer(buf, sizeof(uint8_t));
-			break ;
+			continue ; // read will return EOF next time
 		}
 		ptr = buf;
 		n_cpy = n;
 		while (n > 0)
 		{
-			if (ptr[0] == ptr[1])
+			if (n > 1 && ptr[0] == ptr[1])
 			{
-				if ((n - 2) < 0)
+				if ((n - 2 - (ssize_t)sizeof(count)) < 0)
 				{
-					size_t	__size = (size_t)buf - (size_t)ptr;
-					if ((n - 1) < 0)
-					{
-						// error("RLE_RunLengthEscapeDecode: n < 0");
-						assert( reallocf(buf, ++bufsize) != NULL );
-						assert( read(in, buf + n_cpy, 1) >= 0 );
-					}
-					else
-					{
-						// error("RLE_RunLengthEscapeDecode: n < 0");
-						assert( reallocf(buf, (bufsize += 2)) != NULL );
-						assert( read(in, buf + n_cpy, 2) >= 0 );
-					}
-					ptr = buf + __size;
+					const size_t	__nbyte = (2 + sizeof(count)) - n;
+					size_t			__diff = (size_t)ptr - (size_t)buf;
+
+					// printf("__diff: [%zu], __nbyte: [%zu]\n", __diff, __nbyte);
+					
+					assert( (buf = reallocf(buf, (bufsize += __nbyte))) != NULL );
+					assert( read(in, buf + n_cpy, __nbyte) >= 0 );
+					ptr = buf + __diff;
+					n += __nbyte; // not necessary
 				}
 
-				uint8_t	count = (uint8_t)ptr[2];
+				memmove(&count, ptr + 2, sizeof(count));
 				
-				memset(c_repeat, ptr[0], (size_t)count);
-				RLE_WriteToBuffer(c_repeat, count);
-				ptr += 3;
-				n -= 3;
+				memset(c_repeat, ptr[0], REPEAT_BUFF);
+				
+				count_type	__count = count;
+				while (__count >= REPEAT_BUFF)
+				{
+					RLE_WriteToBuffer(c_repeat, REPEAT_BUFF);
+					__count -= REPEAT_BUFF;
+				}
+				if (__count > 0)
+					RLE_WriteToBuffer(c_repeat, __count);
+				
+				ptr += (2 + sizeof(count));
+				n -= (2 + sizeof(count));
 			}
 			else
 			{
 				RLE_WriteToBuffer(ptr, sizeof(*ptr));
 				++ptr;
 				--n;
+				if (n == 1)
+					assert( lseek(in, -1, SEEK_CUR) != SYSCALL_ERR );
 			}
 		}
 	}
 	if (n < 0)
 		error("read");
 	free(buf);
+	free(c_repeat);
 }
 
-
+/* recursive */
 // void	RLE_RunLengthEscapeDecode(int in, uint8_t last_val, int running)
 // {
 // 	uint8_t		buf[2];
@@ -215,39 +271,4 @@ void	RLE_RunLengthEscapeDecode(int in)
 // 	if (n < 0)
 // 		error("read");
 // 	free(buf);
-// }
-
-
-// void	RLE_RunLengthEscapeDecode(int in)
-// {
-// 	uint8_t		buf1;
-// 	uint8_t		buf2;
-// 	uint8_t		count;
-// 	uint8_t		c_repeat[UCHAR_MAX];
-// 	ssize_t		n;
-
-// 	while (1)
-// 	{
-// 		if (read(in, &buf1, sizeof(buf1)) < 0) error("read");
-// 		if (read(in, &buf2, sizeof(buf2)) < 0) error("read");
-
-// 		if (buf1 != buf2)
-// 		{
-// 			RLE_WriteToBuffer(&buf1, sizeof(buf2));
-// 		}
-
-
-// 		// if (buf1 == buf2)
-// 		// {
-// 		// 	assert( read(in, &count, sizeof(count)) == 1 );
-// 		// 	// assert( count == (size_t)count );
-// 		// 	memset(c_repeat, buf1, (size_t)count);
-// 		// 	RLE_WriteToBuffer(c_repeat, count);
-// 		// }
-// 		// else
-// 		// {	
-// 		// 	RLE_WriteToBuffer(&buf1, sizeof(buf1));
-// 		// 	RLE_WriteToBuffer(&buf2, sizeof(buf2));
-// 		// }
-// 	}
 // }

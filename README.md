@@ -11,12 +11,12 @@ make
 ```
 
 ## Usage
-Encode
+Encode / Compress
 ```sh
 ./RLe <input_file> <output_file>
 ```
 
-Decode
+Decode / Decompress
 ```sh
 ./RLe -d <input_file>
 ```
@@ -28,6 +28,7 @@ Decode
 - [x] Implement default Run Length encoder
 - [x] Implement default Run Length decoder
 - [ ] Implement Run Length escape encoder
-- [x] Implement Run Length escape decoder
+- [ ] Implement Run Length escape decoder
 - [ ] Optimization using Burrows–Wheeler Transform (BWT) algorithm on binary data
+- [ ] Try with stream fonctions (fopen, fread, fwrite...)
 - [ ] Find another (harder) algorithm to implement
