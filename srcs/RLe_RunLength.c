@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   RLE_RunLength.c                                    :+:      :+:    :+:   */
+/*   RLe_RunLength.c                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: besellem <besellem@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/01/04 15:12:44 by besellem          #+#    #+#             */
-/*   Updated: 2022/01/04 15:21:27 by besellem         ###   ########.fr       */
+/*   Updated: 2022/02/13 23:19:10 by besellem         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,18 +16,16 @@
 /* Globals importation */
 extern uint8_t		*g_output;
 extern size_t		g_output_size;
-extern int			fd_in;
-extern int			fd_out;
 
 
-void	RLE_RunLengthEncode(int in)
+void	RLE_RunLengthEncode(RLE_params_t *params)
 {
 	uint8_t		buf[BUFF_SIZE];
 	uint8_t		*ptr;
 	uint8_t		count;
-	ssize_t		n;
+	size_t		n;
 
-	while ((n = read(in, buf, BUFF_SIZE)) > 0)
+	while ((n = fread(buf, sizeof(*buf), BUFF_SIZE, params->input_stream)) > 0)
 	{
 		// RLE_BurrowsWheelerTransformEncode(buf, n);
 		ptr = buf;
@@ -48,17 +46,17 @@ void	RLE_RunLengthEncode(int in)
 		}
 	}
 	if (n < 0)
-		error("read");
+		syscall_error("fread");
 }
 
-void	RLE_RunLengthDecode(int in)
+void	RLE_RunLengthDecode(RLE_params_t *params)
 {
 	uint8_t		buf[BUFF_SIZE];
 	uint8_t		c_repeat[UCHAR_MAX];
 	uint8_t		*ptr;
-	ssize_t		n;
+	size_t		n;
 
-	while ((n = read(in, buf, BUFF_SIZE)) > 0)
+	while ((n = fread(buf, sizeof(*buf), BUFF_SIZE, params->input_stream)) > 0)
 	{
 		ptr = buf;
 		for ( ; n > 0; n -= 2, ptr += 2)
@@ -68,5 +66,5 @@ void	RLE_RunLengthDecode(int in)
 		}
 	}
 	if (n < 0)
-		error("read");
+		syscall_error("fread");
 }

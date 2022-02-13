@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   RLE_RunLengthEscape.c                              :+:      :+:    :+:   */
+/*   RLe_RunLengthEscape.c                              :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: besellem <besellem@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/01/04 15:14:42 by besellem          #+#    #+#             */
-/*   Updated: 2022/01/05 01:28:44 by besellem         ###   ########.fr       */
+/*   Updated: 2022/02/13 23:04:24 by besellem         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,8 +16,6 @@
 /* Globals importation */
 extern uint8_t		*g_output;
 extern size_t		g_output_size;
-extern int			fd_in;
-extern int			fd_out;
 
 
 typedef uint64_t	 count_type;
@@ -25,15 +23,15 @@ typedef uint64_t	 count_type;
 #define REPEAT_BUFF  4096
 
 
-void	RLE_RunLengthEscapeEncode(int in)
+void	RLE_RunLengthEscapeEncode(RLE_params_t *params)
 {
 	uint8_t		buf;
 	uint8_t		buf_prev = 0;
 	count_type	count = 1;
 	ssize_t		n;
 
-	assert( read(in, &buf_prev, sizeof(uint8_t)) != SYSCALL_ERR );
-	while ((n = read(in, &buf, sizeof(uint8_t))) > 0)
+	assert( fread(&buf_prev, sizeof(buf_prev), sizeof(uint8_t), params->input_stream) );
+	while ((n = fread(&buf, sizeof(buf), sizeof(uint8_t), params->input_stream)) > 0)
 	{
 		if (buf == buf_prev)
 		{
@@ -57,7 +55,7 @@ void	RLE_RunLengthEscapeEncode(int in)
 		buf_prev = buf;
 	}
 	if (n < 0)
-		perror("read");
+		syscall_error("fread");
 }
 
 
@@ -104,10 +102,10 @@ void	RLE_RunLengthEscapeEncode(int in)
 // 		}
 // 	}
 // 	if (n < 0)
-// 		error("read");
+// 		syscall_error("read");
 // }
 
-void	RLE_RunLengthEscapeDecode(int in)
+void	RLE_RunLengthEscapeDecode(RLE_params_t *params)
 {
 	size_t		bufsize = BUFF_SIZE;
 	uint8_t		*buf = malloc(bufsize);
@@ -122,10 +120,10 @@ void	RLE_RunLengthEscapeDecode(int in)
 	{
 		free(buf);
 		free(c_repeat);
-		error("malloc");
+		syscall_error("malloc");
 	}
 
-	while ((n = read(in, buf, bufsize)) > 0)
+	while ((n = fread(buf, sizeof(*buf), bufsize, params->input_stream)) > 0)
 	{
 		if (n == 1)
 		{
@@ -146,7 +144,7 @@ void	RLE_RunLengthEscapeDecode(int in)
 					// printf("__diff: [%zu], __nbyte: [%zu]\n", __diff, __nbyte);
 					
 					assert( (buf = reallocf(buf, (bufsize += __nbyte))) != NULL );
-					assert( read(in, buf + n_cpy, __nbyte) >= 0 );
+					assert( fread(buf + n_cpy, sizeof(*buf), __nbyte, params->input_stream) >= 0 );
 					ptr = buf + __diff;
 					n += __nbyte; // not necessary
 				}
@@ -173,12 +171,12 @@ void	RLE_RunLengthEscapeDecode(int in)
 				++ptr;
 				--n;
 				if (n == 1)
-					assert( lseek(in, -1, SEEK_CUR) != SYSCALL_ERR );
+					assert( fseek(params->input_stream, -1, SEEK_CUR) != SYSCALL_ERR );
 			}
 		}
 	}
 	if (n < 0)
-		error("read");
+		syscall_error("fread");
 	free(buf);
 	free(c_repeat);
 }
@@ -238,7 +236,7 @@ void	RLE_RunLengthEscapeDecode(int in)
 // 	ssize_t		n;
 
 // 	if (!buf)
-// 		error("malloc");
+// 		syscall_error("malloc");
 
 // 	while ((n = read(in, buf + buf_idx, 2)) > 0)
 // 	{
@@ -269,6 +267,6 @@ void	RLE_RunLengthEscapeDecode(int in)
 // 		}
 // 	}
 // 	if (n < 0)
-// 		error("read");
+// 		syscall_error("read");
 // 	free(buf);
 // }

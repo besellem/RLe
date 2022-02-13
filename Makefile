@@ -6,7 +6,7 @@
 #    By: besellem <besellem@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2022/01/04 15:00:35 by besellem          #+#    #+#              #
-#    Updated: 2022/01/05 01:22:31 by besellem         ###   ########.fr        #
+#    Updated: 2022/02/13 22:13:15 by besellem         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -15,7 +15,7 @@ NAME		:=	RLe
 ## Main directories
 BUILD_DIR	:=	.build
 SRCS_DIR	:=	srcs
-INCS		:=	
+INCS		:=	-I ./incs
 SUB_DIR		:=	srcs
 OBJ_DIR 	:=	$(BUILD_DIR)/obj
 DIRS		:=	$(OBJ_DIR) $(addprefix $(OBJ_DIR)/, $(SUB_DIR))
@@ -23,6 +23,9 @@ DIRS		:=	$(OBJ_DIR) $(addprefix $(OBJ_DIR)/, $(SUB_DIR))
 
 ## Main srcs
 SRCS		:=	RLe_main.c \
+				RLe_parsing.c \
+				RLe_memory.c \
+				RLe_error.c \
 				RLe.c \
 				RLe_RunLength.c \
 				RLe_RunLengthEscape.c \
@@ -35,7 +38,7 @@ OBJS 		:=	$(SRCS:%.c=$(OBJ_DIR)/%.o)
 
 ## Commands
 CC			:=	clang
-CFLAGS		:=	-Wall -Wextra -Werror #-g3 -fsanitize=address
+CFLAGS		:=	-Wall -Wextra -Werror -g3 -fsanitize=address
 RM			:=	rm -f
 
 
@@ -73,6 +76,6 @@ $(BUILD_DIR):
 
 $(OBJ_DIR)/%.o:$(SRCS_DIR)/%.c | $(BUILD_DIR)
 			@ echo "Compiling $(YELLOW)$< $(CLR_COLOR)..."
-			@ $(CC) $(CFLAGS) -c $< -o $@ $(INCS)
+			@ $(CC) $(CFLAGS) $(INCS) -c $< -o $@
 
 .PHONY:		all clean fclean re

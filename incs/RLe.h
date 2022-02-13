@@ -6,14 +6,18 @@
 /*   By: besellem <besellem@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/01/04 14:46:12 by besellem          #+#    #+#             */
-/*   Updated: 2022/01/04 22:27:03 by besellem         ###   ########.fr       */
+/*   Updated: 2022/02/13 23:08:06 by besellem         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef RLE_H
 # define RLE_H
 
+#include "RLe_parsing.h"
+#include "RLe_memory.h"
 #include "RLe_buffer.h"
+#include "RLe_error.h"
+
 #include <stdio.h>
 #include <libgen.h>
 #include <stdlib.h>
@@ -48,12 +52,17 @@
 #endif
 
 
+#define RLE_ENCODE                  true
+#define RLE_DECODE                  false
+#define RLE_DEFAULT_MODE            RLE_ENCODE
+
+#define RLE_ALGO_RUN_LENGTH         "run-length"
+#define RLE_ALGO_RUN_LENGTH_ESCAPE  "run-length-escape"
+
+
 /*
 ** Macro-like functions
 */
-#define error(msg) \
-	{ fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, (msg)); exit(EXIT_FAILURE); }
-
 #define MAX(a, b)  ((a) > (b) ? (a) : (b))
 #define MIN(a, b)  ((a) < (b) ? (a) : (b))
 #define DIM(a, b)  ((a) - (b) > 0 ? (a) - (b) : 0)
@@ -62,23 +71,23 @@
 /*
 ** Data structures
 */
-enum
+struct	RLE_modes_s
 {
-	MODE_ENCODE,
-	MODE_DECODE
+	bool		mode; // true = encode, false = decode
+	char		*name;
+	void		(*func)(RLE_params_t *);
 };
-
 
 /*
 ** Functions
 */
-void		RLE_EncodeGeneric(int in);
-void		RLE_DecodeGeneric(int in);
 
-void		RLE_RunLengthEncode(int in);
-void		RLE_RunLengthDecode(int in);
-void		RLE_RunLengthEscapeEncode(int in);
-void		RLE_RunLengthEscapeDecode(int in);
+void		RLE_RunGeneric(RLE_params_t *);
+
+void		RLE_RunLengthEncode(RLE_params_t *);
+void		RLE_RunLengthDecode(RLE_params_t *);
+void		RLE_RunLengthEscapeEncode(RLE_params_t *);
+void		RLE_RunLengthEscapeDecode(RLE_params_t *);
 
 void		RLE_BurrowsWheelerTransformEncode(uint8_t *data, size_t size);
 

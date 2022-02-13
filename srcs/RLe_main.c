@@ -6,82 +6,141 @@
 /*   By: besellem <besellem@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/01/04 14:53:48 by besellem          #+#    #+#             */
-/*   Updated: 2022/01/04 15:13:01 by besellem         ###   ########.fr       */
+/*   Updated: 2022/02/13 23:35:21 by besellem         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "RLe.h"
 
-#define USAGE(av) \
-	fprintf(stdout, "Usage: %s <input_file> <output_file>\n" \
-					"       %s -d <input_file>\n", av[0], av[0]);
-
-
 /* Globals */
 uint8_t		*g_output = NULL;
 size_t		g_output_size = 0;
-int			fd_in;
-int			fd_out;
 
+static bool	open_streams(const t_options_parsing *options, RLE_params_t *params)
+{
+	// check if input and output streams are the same
+	if (params->input_file && params->output_file && !strcmp(params->input_file, params->output_file))
+	{
+		fprintf(stderr, "Error: input and output files cannot be the same\n");
+		return false;
+	}
+	
+	// handle input file
+	if (!is_option_set(options->opts, OPT_I_MIN))
+		params->input_stream = stdin;
+	else
+		params->input_stream = fopen(params->input_file, "rb");
+	if (!params->input_stream)
+	{
+		fprintf(stderr, "Error: Could not open input file %s\n", params->input_file);
+		return false;
+	}
+
+	// handle output file
+	if (!is_option_set(options->opts, OPT_O_MIN))
+		params->output_stream = stdout;
+	else
+		params->output_stream = fopen(params->output_file, "wb");
+	if (!params->output_stream)
+	{
+		fprintf(stderr, "Error: Could not create output file %s\n", params->output_file);
+		return false;
+	}
+	
+	return true;
+}
+
+static bool	set_mode(const t_options_parsing *options, RLE_params_t *params)
+{
+	static struct RLE_modes_s	algo[] = {
+		{ RLE_ENCODE, RLE_ALGO_RUN_LENGTH, &RLE_RunLengthEncode },
+		{ RLE_DECODE, RLE_ALGO_RUN_LENGTH, &RLE_RunLengthDecode },
+		{ RLE_ENCODE, RLE_ALGO_RUN_LENGTH_ESCAPE, &RLE_RunLengthEscapeEncode },
+		{ RLE_DECODE, RLE_ALGO_RUN_LENGTH_ESCAPE, &RLE_RunLengthEscapeDecode },
+		{ RLE_DECODE, NULL, 0 }
+	};
+
+
+	params->mode = RLE_DEFAULT_MODE;
+	if (is_option_set(options->opts, OPT_D_MIN))
+		params->mode = RLE_DECODE;
+	else if (is_option_set(options->opts, OPT_E_MIN))
+		params->mode = RLE_ENCODE;
+
+
+	// set default algorithm
+	if (!is_option_set(options->opts, OPT_M_MIN))
+	{
+		params->func = algo[params->mode].func;
+		return true;
+	}
+
+	// search for the algorithm
+	for (size_t i = 0; algo[i].name; ++i)
+	{
+		if (params->mode == algo[i].mode && !strcmp(algo[i].name, params->algo))
+		{
+			params->func = algo[i].func;
+			return true;
+		}
+	}
+	return false;
+}
+
+void	print_params(const RLE_params_t *params)
+{
+	printf("{\n");
+	printf("  mode:        %s\n", params->mode ? "encode" : "decode");
+	printf("  algorithm:   %s\n", params->algo);
+	printf("  input file:  %s\n", params->input_file ? params->input_file : "stdin");
+	printf("  output file: %s\n", params->output_file ? params->output_file : "stdout");
+	printf("}\n");
+}
 
 int		main(int ac, char **av)
 {
-	char			*in_file, *out_file;
-	int				mode = MODE_ENCODE; // default mode is encode
-	struct stat		stat;
+	RLE_params_t		*params = singleton();
+	t_options_parsing	options;
 
 
-	if (ac != 3)
+	if (!params)
+		syscall_error("singleton allocation failed");
+
+	// parse arguments
+	options = parse_args(ac, av, true, "edm:i:o:", &params->algo, &params->input_file, &params->output_file);
+	if (is_option_set(options.opts, OPT_ILLEGAL))
+		main_error(av[0], "illegal option");
+
+	// open streams
+	if (!open_streams(&options, params))
 	{
-		USAGE(av);
-		return (EXIT_FAILURE);
+		free_all();
+		return EXIT_FAILURE;
 	}
 
-
-	if (!strcmp(av[1], "-d"))
-		mode = MODE_DECODE;
-
-	
-	in_file = (mode == MODE_DECODE) ? av[2] : av[1];
-	fd_in = open(in_file, O_RDONLY);
-	assert( fd_in != SYSCALL_ERR );
-	assert( fstat(fd_in, &stat) == 0 );
+#if DEBUG >= DEBUG_LEVEL_1
+	fprintf(stderr, "* Allocating %u bytes for input buffer\n", BUFF_SIZE);
+#endif
+	if (!(g_output = malloc(BUFF_SIZE)))
+		syscall_error("malloc failed");
 	
 	
-	if (mode == MODE_DECODE)
-	{
-		{
-			char *_out_name = strrchr(av[2], '.');
-			if (_out_name)
-				*_out_name = '\0';
-		}
-	}
-	out_file = av[2];
-	fd_out = open(out_file, O_TRUNC | O_CREAT | O_WRONLY, 0644);
-	assert( fd_out != SYSCALL_ERR );
+	// set modes (encode / decode) and algorithm
+	if (!set_mode(&options, params))
+		main_error(av[0], "invalid algorithm");
+
 	
+#if DEBUG >= DEBUG_LEVEL_1
+	print_params(params);
+#endif
 
-
-	// printf("* Allocating %u bytes for input buffer\n", BUFF_SIZE);
-	assert ( (g_output = malloc(BUFF_SIZE)) != NULL );
-
-	if (mode == MODE_ENCODE)
-	{
-		RLE_EncodeGeneric(fd_in);
-	}
-	else
-	{
-		RLE_DecodeGeneric(fd_in);
-	}
-
-
-	RLE_FlushBuffer(fd_out);
-
-	close(fd_in);
-	close(fd_out);
 	
-	free(g_output);
-	g_output = NULL;
+	// run the algorithm
+	RLE_RunGeneric(params);
 	
-	return (EXIT_SUCCESS);
+	
+	RLE_FlushBuffer();
+	
+	free_all();
+	return EXIT_SUCCESS;
 }

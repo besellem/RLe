@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   RLE_BurrowsWheelerTransform.c                      :+:      :+:    :+:   */
+/*   RLe_BurrowsWheelerTransform.c                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: besellem <besellem@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/01/04 15:16:16 by besellem          #+#    #+#             */
-/*   Updated: 2022/01/04 15:21:55 by besellem         ###   ########.fr       */
+/*   Updated: 2022/02/13 22:13:38 by besellem         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,7 @@ static ssize_t	*computeSuffixArray(uint8_t *input_text, size_t size)
 	{
 		free(suff);
 		free(suffix_arr);
-		error("malloc");
+		syscall_error("malloc");
 	}
 
 	for (i = 0; i < size; ++i)
