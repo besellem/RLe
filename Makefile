@@ -6,7 +6,7 @@
 #    By: besellem <besellem@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2022/01/04 15:00:35 by besellem          #+#    #+#              #
-#    Updated: 2022/02/13 22:13:15 by besellem         ###   ########.fr        #
+#    Updated: 2022/02/14 17:09:30 by besellem         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -15,7 +15,7 @@ NAME		:=	RLe
 ## Main directories
 BUILD_DIR	:=	.build
 SRCS_DIR	:=	srcs
-INCS		:=	-I ./incs
+INCS		:=	-Iincs
 SUB_DIR		:=	srcs
 OBJ_DIR 	:=	$(BUILD_DIR)/obj
 DIRS		:=	$(OBJ_DIR) $(addprefix $(OBJ_DIR)/, $(SUB_DIR))

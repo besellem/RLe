@@ -6,7 +6,7 @@
 /*   By: besellem <besellem@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/01/04 14:46:12 by besellem          #+#    #+#             */
-/*   Updated: 2022/02/13 23:08:06 by besellem         ###   ########.fr       */
+/*   Updated: 2022/02/14 17:11:13 by besellem         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,9 +51,8 @@
 # error "BUFF_SIZE must be at least 2"
 #endif
 
-
-#define RLE_ENCODE                  true
-#define RLE_DECODE                  false
+#define RLE_ENCODE                  0
+#define RLE_DECODE                  1
 #define RLE_DEFAULT_MODE            RLE_ENCODE
 
 #define RLE_ALGO_RUN_LENGTH         "run-length"
@@ -73,7 +72,7 @@
 */
 struct	RLE_modes_s
 {
-	bool		mode; // true = encode, false = decode
+	uint		mode; // 0 = encode, 1 = decode
 	char		*name;
 	void		(*func)(RLE_params_t *);
 };

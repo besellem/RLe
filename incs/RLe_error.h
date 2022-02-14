@@ -6,7 +6,7 @@
 /*   By: besellem <besellem@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/02/13 21:59:23 by besellem          #+#    #+#             */
-/*   Updated: 2022/02/13 22:57:11 by besellem         ###   ########.fr       */
+/*   Updated: 2022/02/14 17:11:59 by besellem         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@
 #define DEBUG_LVL_2  2 // Prints basic info + buffer info + memory info
 
 #ifndef DEBUG
-# define DEBUG       DEBUG_LVL_2
+# define DEBUG       DEBUG_LVL_1
 #endif
 
 

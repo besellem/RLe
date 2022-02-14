@@ -6,7 +6,7 @@
 /*   By: besellem <besellem@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/01/04 14:53:48 by besellem          #+#    #+#             */
-/*   Updated: 2022/02/13 23:35:21 by besellem         ###   ########.fr       */
+/*   Updated: 2022/02/14 17:11:34 by besellem         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -89,10 +89,19 @@ static bool	set_mode(const t_options_parsing *options, RLE_params_t *params)
 
 void	print_params(const RLE_params_t *params)
 {
+	struct stat	s = { 0 };
+	
+	stat(params->input_file, &s);
+
 	printf("{\n");
-	printf("  mode:        %s\n", params->mode ? "encode" : "decode");
+
+	if (params->mode == RLE_ENCODE)      printf("  mode:        encode\n");
+	else if (params->mode == RLE_DECODE) printf("  mode:        decode\n");
+	
 	printf("  algorithm:   %s\n", params->algo);
-	printf("  input file:  %s\n", params->input_file ? params->input_file : "stdin");
+	printf("  input file:  %s [%.1f MB]\n",
+		params->input_file ? params->input_file : "stdin",
+		s.st_size / 1000000.0);
 	printf("  output file: %s\n", params->output_file ? params->output_file : "stdout");
 	printf("}\n");
 }
@@ -117,20 +126,19 @@ int		main(int ac, char **av)
 		free_all();
 		return EXIT_FAILURE;
 	}
-
-#if DEBUG >= DEBUG_LEVEL_1
-	fprintf(stderr, "* Allocating %u bytes for input buffer\n", BUFF_SIZE);
-#endif
-	if (!(g_output = malloc(BUFF_SIZE)))
-		syscall_error("malloc failed");
-	
 	
 	// set modes (encode / decode) and algorithm
 	if (!set_mode(&options, params))
 		main_error(av[0], "invalid algorithm");
 
+
+#if DEBUG >= DEBUG_LVL_2
+	fprintf(stderr, "* Allocating %u bytes for input buffer\n", BUFF_SIZE);
+#endif
+	if (!(g_output = malloc(BUFF_SIZE)))
+		syscall_error("malloc failed");
 	
-#if DEBUG >= DEBUG_LEVEL_1
+#if DEBUG >= DEBUG_LVL_1
 	print_params(params);
 #endif
 

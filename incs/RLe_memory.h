@@ -6,7 +6,7 @@
 /*   By: besellem <besellem@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/02/13 21:36:52 by besellem          #+#    #+#             */
-/*   Updated: 2022/02/13 23:36:57 by besellem         ###   ########.fr       */
+/*   Updated: 2022/02/14 14:01:35 by besellem         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@ extern size_t	g_output_size;
 
 typedef	struct	RLE_params_s
 {
-	bool		mode;  // true = encode, false = decode
+	uint		mode;  // 0 = encode, 1 = decode
 	char		*algo; // name of the algorithm
 
 	// input / output streams & files
