@@ -6,7 +6,7 @@
 /*   By: besellem <besellem@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/02/13 21:54:50 by besellem          #+#    #+#             */
-/*   Updated: 2022/02/13 22:54:42 by besellem         ###   ########.fr       */
+/*   Updated: 2022/02/15 23:03:03 by besellem         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,10 +21,10 @@ void	_main_error(const char *msg, const char *program_name, const char *file, si
 void	_syscall_error(const char *msg, __unused const char *file, __unused size_t line)
 {
 #if DEBUG >= DEBUG_LVL_1
-	fprintf(stderr, "%s:%zu: Error: %s\n", file, line, msg);
+	fprintf(stderr, "%s:%zu: " ERROR_MSG ": %s\n", file, line, msg);
 #else
-	fprintf(stderr, "Error: %s\n", msg);
+	fprintf(stderr, ERROR_MSG ": %s\n", msg);
 #endif
-	free_all();
+	RLE_free_all();
 	exit(EXIT_FAILURE);
 }

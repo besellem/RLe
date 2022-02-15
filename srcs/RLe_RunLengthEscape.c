@@ -6,32 +6,24 @@
 /*   By: besellem <besellem@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/01/04 15:14:42 by besellem          #+#    #+#             */
-/*   Updated: 2022/02/13 23:04:24 by besellem         ###   ########.fr       */
+/*   Updated: 2022/02/15 21:19:48 by besellem         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "RLe.h"
 #include "RLe_BurrowsWheelerTransform.h"
 
-/* Globals importation */
-extern uint8_t		*g_output;
-extern size_t		g_output_size;
-
-
-typedef uint64_t	 count_type;
-#define COUNT_MAX	 UINT64_MAX
 #define REPEAT_BUFF  4096
-
 
 void	RLE_RunLengthEscapeEncode(RLE_params_t *params)
 {
-	uint8_t		buf;
-	uint8_t		buf_prev = 0;
+	buf_type	buf;
+	buf_type	buf_prev = 0;
 	count_type	count = 1;
-	ssize_t		n;
+	size_t		n;
 
-	assert( fread(&buf_prev, sizeof(buf_prev), sizeof(uint8_t), params->input_stream) );
-	while ((n = fread(&buf, sizeof(buf), sizeof(uint8_t), params->input_stream)) > 0)
+	RLE_fread(&buf_prev, sizeof(buf_type), params->input_stream);
+	while ((n = RLE_fread(&buf, sizeof(buf_type), params->input_stream)))
 	{
 		if (buf == buf_prev)
 		{
@@ -42,29 +34,27 @@ void	RLE_RunLengthEscapeEncode(RLE_params_t *params)
 		{
 			if (count == 1)
 			{
-				RLE_WriteToBuffer(&buf_prev, sizeof(buf));
+				RLE_WriteToBuffer(&buf_prev, sizeof(buf_type));
 			}
 			else
 			{
-				RLE_WriteToBuffer(&buf_prev, sizeof(buf)); // value added 2 times
-				RLE_WriteToBuffer(&buf_prev, sizeof(buf));
+				RLE_WriteToBuffer(&buf_prev, sizeof(buf_type)); // value added 2 times
+				RLE_WriteToBuffer(&buf_prev, sizeof(buf_type));
 				RLE_WriteToBuffer(&count, sizeof(count));  // number of repetitions
 				count = 1;
 			}
 		}
 		buf_prev = buf;
 	}
-	if (n < 0)
-		syscall_error("fread");
 }
 
 
 // void	RLE_RunLengthEscapeEncode(int in)
 // {
-// 	uint8_t		buf[BUFF_SIZE];
-// 	uint8_t		*ptr;
-// 	uint8_t		count;
-// 	ssize_t		n;
+// 	buf_type	buf[BUFF_SIZE];
+// 	buf_type	*ptr;
+// 	buf_type	count;
+// 	size_t		n;
 
 // 	while ((n = read(in, buf, BUFF_SIZE)) > 0)
 // 	{
@@ -101,33 +91,23 @@ void	RLE_RunLengthEscapeEncode(RLE_params_t *params)
 // 			++ptr;
 // 		}
 // 	}
-// 	if (n < 0)
-// 		syscall_error("read");
 // }
 
 void	RLE_RunLengthEscapeDecode(RLE_params_t *params)
 {
 	size_t		bufsize = BUFF_SIZE;
-	uint8_t		*buf = malloc(bufsize);
-	uint8_t		*c_repeat = malloc(REPEAT_BUFF);
-	uint8_t		*ptr;
+	buf_type	*buf = RLE_alloc(bufsize);
+	buf_type	*c_repeat = RLE_alloc(COUNT_MAX);
+	buf_type	*ptr;
 	ssize_t		n;
 	ssize_t		n_cpy;
 	count_type	count;
 
-
-	if (!buf || !c_repeat)
-	{
-		free(buf);
-		free(c_repeat);
-		syscall_error("malloc");
-	}
-
-	while ((n = fread(buf, sizeof(*buf), bufsize, params->input_stream)) > 0)
+	while ((n = RLE_fread(buf, bufsize, params->input_stream)))
 	{
 		if (n == 1)
 		{
-			RLE_WriteToBuffer(buf, sizeof(uint8_t));
+			RLE_WriteToBuffer(buf, sizeof(buf_type));
 			continue ; // read will return EOF next time
 		}
 		ptr = buf;
@@ -143,21 +123,22 @@ void	RLE_RunLengthEscapeDecode(RLE_params_t *params)
 
 					// printf("__diff: [%zu], __nbyte: [%zu]\n", __diff, __nbyte);
 					
-					assert( (buf = reallocf(buf, (bufsize += __nbyte))) != NULL );
-					assert( fread(buf + n_cpy, sizeof(*buf), __nbyte, params->input_stream) >= 0 );
+					buf = RLE_realloc(buf, (bufsize += __nbyte));
+					RLE_fread(buf + n_cpy, __nbyte, params->input_stream);
 					ptr = buf + __diff;
 					n += __nbyte; // not necessary
 				}
 
 				memmove(&count, ptr + 2, sizeof(count));
 				
-				memset(c_repeat, ptr[0], REPEAT_BUFF);
+				memset(c_repeat, ptr[0], COUNT_MAX);
+				// memset(c_repeat, ptr[0], MIN(COUNT_MAX, count));
 				
 				count_type	__count = count;
-				while (__count >= REPEAT_BUFF)
+				while (__count >= COUNT_MAX)
 				{
-					RLE_WriteToBuffer(c_repeat, REPEAT_BUFF);
-					__count -= REPEAT_BUFF;
+					RLE_WriteToBuffer(c_repeat, COUNT_MAX);
+					__count -= COUNT_MAX;
 				}
 				if (__count > 0)
 					RLE_WriteToBuffer(c_repeat, __count);
@@ -175,18 +156,16 @@ void	RLE_RunLengthEscapeDecode(RLE_params_t *params)
 			}
 		}
 	}
-	if (n < 0)
-		syscall_error("fread");
 	free(buf);
 	free(c_repeat);
 }
 
 /* recursive */
-// void	RLE_RunLengthEscapeDecode(int in, uint8_t last_val, int running)
+// void	RLE_RunLengthEscapeDecode(int in, buf_type last_val, int running)
 // {
-// 	uint8_t		buf[2];
-// 	uint8_t		c_repeat[UCHAR_MAX];
-// 	uint8_t		count;
+// 	buf_type	buf[2];
+// 	buf_type	c_repeat[UCHAR_MAX];
+// 	buf_type	count;
 // 	ssize_t		n = 0;
 
 // 	if ((n = read(in, buf, sizeof(buf))) > 0)
@@ -195,7 +174,7 @@ void	RLE_RunLengthEscapeDecode(RLE_params_t *params)
 // 		{
 // 			if (buf[0] == last_val)
 // 			{
-// 				count = (uint8_t)buf[1];
+// 				count = (buf_type)buf[1];
 // 				memset(c_repeat, buf[0], count);
 // 				RLE_WriteToBuffer(c_repeat, count);
 // 				RLE_RunLengthEscapeDecode(in, 0, 0);
@@ -205,7 +184,7 @@ void	RLE_RunLengthEscapeDecode(RLE_params_t *params)
 
 // 		if (n == 1)
 // 		{
-// 			RLE_WriteToBuffer(buf, sizeof(uint8_t));
+// 			RLE_WriteToBuffer(buf, sizeof(buf_type));
 // 		}
 // 		else // n == 2
 // 		{
@@ -218,7 +197,7 @@ void	RLE_RunLengthEscapeDecode(RLE_params_t *params)
 // 			}
 // 			else
 // 			{
-// 				RLE_WriteToBuffer(buf, sizeof(uint8_t));
+// 				RLE_WriteToBuffer(buf, sizeof(buf_type));
 // 				RLE_RunLengthEscapeDecode(in, buf[1], 1);
 // 			}
 // 		}
@@ -229,14 +208,11 @@ void	RLE_RunLengthEscapeDecode(RLE_params_t *params)
 // void	RLE_RunLengthEscapeDecode(int in)
 // {
 // 	size_t		size = BUFF_SIZE;
-// 	uint8_t		*buf = malloc(size);
+// 	buf_type	*buf = RLE_alloc(size);
 // 	size_t		buf_idx = 0;
-// 	uint8_t		count;
-// 	uint8_t		c_repeat[UCHAR_MAX];
+// 	buf_type	count;
+// 	buf_type	c_repeat[UCHAR_MAX];
 // 	ssize_t		n;
-
-// 	if (!buf)
-// 		syscall_error("malloc");
 
 // 	while ((n = read(in, buf + buf_idx, 2)) > 0)
 // 	{
@@ -258,7 +234,7 @@ void	RLE_RunLengthEscapeDecode(RLE_params_t *params)
 // 				RLE_WriteToBuffer(buf + buf_idx, sizeof(*buf));
 // 				if (buf_idx + 1 > size)
 // 				{
-// 					assert( reallocf(buf, (size += BUFF_SIZE)) != NULL );
+// 					RLE_realloc(buf, (size += BUFF_SIZE));
 // 				}
 // 				memcpy(buf + buf_idx, buf + buf_idx + 1, sizeof(*buf));
 // 				++buf_idx;

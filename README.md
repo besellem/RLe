@@ -29,6 +29,7 @@ The options can be used in any order :
 
 `-e` encoding mode : Is enabled by default (it can be ommited when encoding)  
 `-d` decoding mode  
+`-v` verbose  
 `-i` input file : If not specified, stdin is used  
 `-o` output file : Will be created. If not specified, stdout is used  
 `-m` algorithm : The algorithm to use

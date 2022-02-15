@@ -6,45 +6,42 @@
 /*   By: besellem <besellem@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/01/04 14:57:32 by besellem          #+#    #+#             */
-/*   Updated: 2022/02/13 23:36:15 by besellem         ###   ########.fr       */
+/*   Updated: 2022/02/15 21:37:56 by besellem         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef RLE_BUFFER_H
 # define RLE_BUFFER_H
 
+#include "RLe_types.h"
 #include "RLe_memory.h"
-#include <sys/types.h>
+#include "RLe_error.h"
 
 
-extern uint8_t	*g_output;
+extern buf_type	*g_output;
+extern size_t	g_output_idx;
 extern size_t	g_output_size;
 
 
-typedef	struct	RLE_buffer_s {
-	uint8_t		*buffer;
-	size_t		size;
-	size_t		pos;
-}				RLE_buffer_t;
+#define RLE_fwrite(__buf, __size) \
+	fwrite((__buf), 1, (__size), RLE_get_params()->output_stream)
 
 
 /* flush buffer */
 #define RLE_FlushBuffer() \
-	do { \
-		fwrite(g_output, 1, g_output_size, singleton()->output_stream); \
-	} while (0);
+	RLE_fwrite(g_output, g_output_idx)
 
 
 /* bufferize or write directly */
-#define RLE_WriteToBuffer(buf, nbyte) \
+#define RLE_WriteToBuffer(__buf, __nbyte) \
 	do { \
-		if (g_output_size + (nbyte) >= BUFF_SIZE) { \
+		if (g_output_idx + (__nbyte) >= g_output_size) { \
 			RLE_FlushBuffer(); \
-			fwrite((buf), 1, (nbyte), singleton()->output_stream); \
-			g_output_size = 0; \
+			RLE_fwrite(__buf, __nbyte); \
+			g_output_idx = 0; \
 		} else { \
-			memmove(g_output + g_output_size, (buf), (nbyte)); \
-			g_output_size += (nbyte); \
+			memmove(g_output + g_output_idx, (__buf), (__nbyte)); \
+			g_output_idx += (__nbyte); \
 		} \
 	} while (0);
 

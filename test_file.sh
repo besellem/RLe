@@ -52,10 +52,10 @@ echo "> Compiling ${GREEN}${PROG}${CLR_COLOR}..."
 make > /dev/null
 
 echo "> Encoding..."
-./$PROG -e $ALGO -i $INPUT_FILE -o $ENCODED_FILE
+./$PROG -e $ALGO -i $INPUT_FILE -o $ENCODED_FILE -v
 
 echo "> Decoding..."
-./$PROG -d $ALGO -i $ENCODED_FILE -o $DECODED_FILE
+./$PROG -d $ALGO -i $ENCODED_FILE -o $DECODED_FILE -v
 
 
 echo "> Comparing input file and decoded file..."

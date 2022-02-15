@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   RLE_BurrowsWheelerTransform.h                      :+:      :+:    :+:   */
+/*   RLe_BurrowsWheelerTransform.h                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: besellem <besellem@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/01/04 15:16:27 by besellem          #+#    #+#             */
-/*   Updated: 2022/01/04 15:23:09 by besellem         ###   ########.fr       */
+/*   Updated: 2022/02/15 16:21:24 by besellem         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@ typedef struct rotation_s
 {
 	size_t		size;
 	size_t		index;
-	uint8_t		*suffix;
+	buf_type	*suffix;
 }	rotation_t;
 
 #endif

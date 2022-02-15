@@ -6,7 +6,7 @@
 /*   By: besellem <besellem@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/02/13 21:59:23 by besellem          #+#    #+#             */
-/*   Updated: 2022/02/14 17:11:59 by besellem         ###   ########.fr       */
+/*   Updated: 2022/02/15 23:07:58 by besellem         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,14 @@
 #include <stdlib.h>
 
 
+#define RED        "\e[1;31m"
+#define GREEN      "\e[1;32m"
+#define CLR_COLOR  "\e[0m"
+#define CLR_LINE   "\e[2K\r"
+
+#define ERROR_MSG  RED "Error" CLR_COLOR
+
+
 /*
 ** DEBUG LEVELS
 */
@@ -26,7 +34,7 @@
 #define DEBUG_LVL_2  2 // Prints basic info + buffer info + memory info
 
 #ifndef DEBUG
-# define DEBUG       DEBUG_LVL_1
+# define DEBUG       DEBUG_LVL_0
 #endif
 
 
@@ -34,15 +42,16 @@
 	fprintf(stdout, "Usage: %1$s -ed [-m mode] [-i input_file] [-o output_file]\n" \
 					"%2$13c -e: Encode mode\n" \
 					"%2$13c -d: Decode mode\n" \
+					"%2$13c -v: verbose\n" \
 					"%2$13c -i: Input file\n" \
 					"%2$13c -o: Output file\n" \
 					"%2$13c -m: Modes:\n" \
 					"%2$16c - run-length\n" \
 					"%2$16c - run-length-escape\n", \
-					prog_name, 0);
+					prog_name, 0)
 
-#define main_error(prog_name, msg)  _main_error((msg), (prog_name), __FILE__, __LINE__);
-#define syscall_error(msg)          _syscall_error((msg), __FILE__, __LINE__);
+#define main_error(prog_name, msg)  _main_error((msg), (prog_name), __FILE__, __LINE__)
+#define syscall_error(msg)          _syscall_error((msg), __FILE__, __LINE__)
 
 
 void	_main_error(const char *, const char *, const char *, size_t);
